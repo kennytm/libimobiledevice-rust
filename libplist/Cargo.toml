@@ -1,0 +1,28 @@
+[package]
+name = "libplist"
+authors = ["kennytm <kennytm@gmail.com>"]
+keywords = ["libplist", "plist", "libimobiledevice"]
+repository = "https://github.com/kennytm/libimobiledevice-rust"
+documentation = "http://kennytm.github.io/libimobiledevice-rust/"
+license = "LGPL-2.1"
+version = "0.1.0+libplist-1.12.0"
+
+description = """
+Converts between a Rust plist structure and a libplist value.
+
+libplist is a library to handle Apple Property List format in binary or XML.
+This library exists only to support libimobiledevice. Consider using other
+crates for reading and writing property list files.
+"""
+
+[dependencies]
+libc = "0.2.12"
+libplist-sys = { version= "1.12.0", path = "../libplist-sys" }
+plist = { version = "0.0.13", optional = true }
+chrono = { version = "0.2.22", optional = true }
+plist-rs = { version = "0.1.0", optional = true }
+
+[features]
+plist-interop = ["plist", "chrono"]
+plist-rs-interop = ["plist-rs"]
+
