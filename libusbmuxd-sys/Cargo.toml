@@ -1,0 +1,21 @@
+[package]
+name = "libusbmuxd-sys"
+authors = ["kennytm <kennytm@gmail.com>"]
+keywords = ["libimobiledevice", "usbmux", "iphone", "ios"]
+repository = "https://github.com/kennytm/libimobiledevice-rust"
+documentation = "http://kennytm.github.io/libimobiledevice-rust/"
+license = "LGPL-2.1"
+version = "1.0.10"
+
+description = """
+Native bindings to libusbmuxd.
+
+libusbmuxd is A client library to multiplex connections from and to iOS devices
+by connecting to a socket provided by a usbmuxd daemon.
+"""
+
+build = "build.rs"
+
+[build-dependencies]
+pkg-config = "0.3.8"
+
