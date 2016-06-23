@@ -23,10 +23,12 @@ pub const IDEVICE_E_BAD_HEADER: idevice_error_t = idevice_error_t::BadHeader;
 pub const IDEVICE_E_SSL_ERROR: idevice_error_t = idevice_error_t::SslError;
 
 #[doc(hidden)]
+#[repr(C)]
 pub struct idevice_private(c_void);
 pub type idevice_t = *mut idevice_private;
 
 #[doc(hidden)]
+#[repr(C)]
 pub struct idevice_connection_private(c_void);
 pub type idevice_connection_t = *mut idevice_connection_private;
 

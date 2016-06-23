@@ -88,6 +88,7 @@ pub const LOCKDOWN_E_ESCROW_LOCKED: lockdownd_error_t = lockdownd_error_t::Escro
 pub const LOCKDOWN_E_UNKNOWN_ERROR: lockdownd_error_t = lockdownd_error_t::UnknownError;
 
 #[doc(hidden)]
+#[repr(C)]
 pub struct lockdownd_client_private(c_void);
 pub type lockdownd_client_t = *mut lockdownd_client_private;
 

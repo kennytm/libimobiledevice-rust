@@ -5,6 +5,7 @@ extern crate libplist_sys;
 pub mod idevice;
 pub mod lockdown;
 pub mod afc;
+pub mod diagnostics_relay;
 
 pub use idevice::*;
 

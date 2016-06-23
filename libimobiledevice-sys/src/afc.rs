@@ -5,7 +5,8 @@ use lockdown::lockdownd_service_descriptor_t;
 
 use std::os::raw::{c_char, c_void, c_int};
 
-pub const AFC_SERVICE_NAME: &'static str = "com.apple.afc";
+pub const AFC_SERVICE_NAME: &'static [u8] = b"com.apple.afc\0";
+pub const AFC2_SERVICE_NAME: &'static [u8] = b"com.apple.afc2\0";
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[repr(i32)]
@@ -112,6 +113,7 @@ pub const AFC_LOCK_EX: afc_lock_op_t = afc_lock_op_t::LockExclusive;
 pub const AFC_LOCK_UN: afc_lock_op_t = afc_lock_op_t::Unlock;
 
 #[doc(hidden)]
+#[repr(C)]
 pub struct afc_client_private(c_void);
 pub type afc_client_t = *mut afc_client_private;
 
