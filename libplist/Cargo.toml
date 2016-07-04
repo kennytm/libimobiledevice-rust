@@ -17,10 +17,15 @@ crates for reading and writing property list files.
 
 [dependencies]
 libc = "0.2.12"
+mbox = "0.1.1"
+asprim = "0.1.0"
 libplist-sys = { version= "1.12.0", path = "../libplist-sys" }
 plist = { version = "0.0.13", optional = true }
 chrono = { version = "0.2.22", optional = true }
 plist-rs = { version = "0.1.0", optional = true }
+
+[dev-dependencies]
+const-cstr = "0.1.0"
 
 [features]
 plist-interop = ["plist", "chrono"]

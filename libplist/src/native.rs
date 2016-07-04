@@ -3,18 +3,21 @@
 // Converting between native types and libplist.
 
 use libplist_sys::*;
+use mbox::MString;
 
 use std::default::Default;
 use std::ptr::null_mut;
 use std::collections::{HashMap, BTreeMap};
 use std::hash::{Hash, BuildHasher};
 use std::time::{UNIX_EPOCH, SystemTime, Duration};
+use std::ffi::{CStr, CString};
 
 use libc::{c_double, c_char};
 
 use node::{Node, OwnedNode, BorrowedNode, FromPlistNode, ToPlistNode};
 use error::PlistError;
-use internal::{char_ptr_to_string, recv_data_64, TIMESTAMP_OFFSET};
+use internal::{recv_data, TIMESTAMP_OFFSET};
+use c_str::ToCStr;
 
 //{{{ bool ----------------------------------------------------------------------------------------
 
@@ -84,18 +87,41 @@ generate_roundtrip_test!(test_f32_roundtrip, 8.625f32, f32);
 
 //{{{ String --------------------------------------------------------------------------------------
 
-impl FromPlistNode for String {
+impl FromPlistNode for MString {
     fn from_plist_node(node: &Node) -> Result<Self, PlistError> {
         try!(node.expect_type(PLIST_STRING));
         let mut result = null_mut();
-        unsafe { plist_get_string_val(node.as_ptr(), &mut result) };
-        char_ptr_to_string(result)
+        unsafe {
+            plist_get_string_val(node.as_ptr(), &mut result);
+            Ok(MString::from_raw_unchecked(result))
+        }
+    }
+}
+
+impl FromPlistNode for String {
+    fn from_plist_node(node: &Node) -> Result<Self, PlistError> {
+        let mstring = try!(MString::from_plist_node(node));
+        let sr: &str = &mstring;
+        Ok(sr.to_owned())
+    }
+}
+
+impl ToPlistNode for CStr {
+    fn to_plist_node(&self) -> OwnedNode {
+        OwnedNode::new_str(self)
     }
 }
 
 impl ToPlistNode for str {
     fn to_plist_node(&self) -> OwnedNode {
-        OwnedNode::new_str(self)
+        let cstring = CString::new(self).expect("The string must not contain any interior null");
+        cstring.to_plist_node()
+    }
+}
+
+impl ToPlistNode for CString {
+    fn to_plist_node(&self) -> OwnedNode {
+        (**self).to_plist_node()
     }
 }
 
@@ -143,33 +169,41 @@ generate_roundtrip_test!(test_empty_array_roundtrip, Vec::<u64>::new(), Vec<u64>
 //{{{ Dictionary ----------------------------------------------------------------------------------
 
 macro_rules! impl_from_plist_node_for_map {
-    (|$d:ident| $n:expr) => {
+    (|$d:ident| $n:expr, $key_transform:expr) => {
         fn from_plist_node(node: &Node) -> Result<Self, PlistError> {
             let $d = try!(node.dict());
             let mut result = $n;
             for (key, val) in $d {
-                result.insert(key, try!(T::from_plist_node(val)));
+                result.insert($key_transform(key), try!(T::from_plist_node(val)));
             }
             Ok(result)
         }
     }
 }
 
+impl<T: FromPlistNode> FromPlistNode for BTreeMap<MString, T> {
+    impl_from_plist_node_for_map!(|d| BTreeMap::new(), |k| k);
+}
+
+impl<T: FromPlistNode, S: BuildHasher + Default> FromPlistNode for HashMap<MString, T, S> {
+    impl_from_plist_node_for_map!(|d| HashMap::with_capacity_and_hasher(d.len(), S::default()), |k| k);
+}
+
 impl<T: FromPlistNode> FromPlistNode for BTreeMap<String, T> {
-    impl_from_plist_node_for_map!(|d| BTreeMap::new());
+    impl_from_plist_node_for_map!(|d| BTreeMap::new(), |k| (&k as &str).to_owned());
 }
 
 impl<T: FromPlistNode, S: BuildHasher + Default> FromPlistNode for HashMap<String, T, S> {
-    impl_from_plist_node_for_map!(|d| HashMap::with_capacity_and_hasher(d.len(), S::default()));
+    impl_from_plist_node_for_map!(|d| HashMap::with_capacity_and_hasher(d.len(), S::default()), |k| (&k as &str).to_owned());
 }
 
-impl<K: AsRef<str>, V: ToPlistNode> ToPlistNode for BTreeMap<K, V> {
+impl<K: ToCStr, V: ToPlistNode> ToPlistNode for BTreeMap<K, V> {
     fn to_plist_node(&self) -> OwnedNode {
         self.iter().map(|(k, v)| (k, v.to_plist_node())).collect()
     }
 }
 
-impl<K: AsRef<str> + Hash + Eq, V: ToPlistNode, S: BuildHasher> ToPlistNode for HashMap<K, V, S> {
+impl<K: ToCStr + Hash + Eq, V: ToPlistNode, S: BuildHasher> ToPlistNode for HashMap<K, V, S> {
     fn to_plist_node(&self) -> OwnedNode {
         self.iter().map(|(k, v)| (k, v.to_plist_node())).collect()
     }
@@ -202,7 +236,8 @@ generate_roundtrip_test!(test_empty_map_roundtrip, HashMap::new(), HashMap<Strin
 impl FromPlistNode for Vec<u8> {
     fn from_plist_node(node: &Node) -> Result<Self, PlistError> {
         try!(node.expect_type(PLIST_DATA));
-        Ok(recv_data_64(|ptr, len| unsafe { plist_get_data_val(node.as_ptr(), ptr, len) }))
+        let data = recv_data(|ptr, len| unsafe { plist_get_data_val(node.as_ptr(), ptr, len) });
+        Ok(data.to_vec())
     }
 }
 

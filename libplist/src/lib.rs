@@ -21,7 +21,7 @@
 //! let node = options.to_plist_node();
 //!
 //! // Serialize node into XML.
-//! assert_eq!(node.to_xml(), "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+//! assert_eq!(&*node.to_xml(), "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 //! <!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
 //! <plist version=\"1.0\">
 //! <dict>
@@ -29,7 +29,7 @@
 //! \t<string>Any</string>
 //! </dict>
 //! </plist>
-//! ".to_owned());
+//! ");
 //! ```
 //!
 //! Creating a node from XML, and convert into Rust type.
@@ -69,12 +69,17 @@
 
 extern crate libplist_sys;
 extern crate libc;
+extern crate mbox;
+extern crate asprim;
+
+#[cfg(test)] #[macro_use] extern crate const_cstr;
 
 #[cfg(feature="plist-interop")] extern crate plist as plist_crate;
 #[cfg(feature="plist-interop")] extern crate chrono;
 #[cfg(feature="plist-rs-interop")] extern crate plist as plist_rs_crate; // why are you called `plist` as well???
 
 #[macro_use] mod internal;
+pub mod c_str;
 pub mod node;
 pub mod error;
 pub mod native;

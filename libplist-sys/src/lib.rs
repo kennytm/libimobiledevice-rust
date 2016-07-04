@@ -12,8 +12,15 @@
 
 use std::os::raw::{c_void, c_char, c_double};
 
-pub type plist_t = *mut c_void;
-pub type plist_dict_iter = *mut c_void;
+#[repr(C)]
+#[doc(hidden)]
+pub struct plist_private(c_void);
+pub type plist_t = *mut plist_private;
+
+#[repr(C)]
+#[doc(hidden)]
+pub struct plist_dict_iter_private(c_void);
+pub type plist_dict_iter = *mut plist_dict_iter_private;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[repr(u32)]
